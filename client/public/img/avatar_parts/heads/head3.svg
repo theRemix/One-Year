@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16" height="10" viewBox="0 0 16 10">
+  <image class="skin" x="2" y="4" width="11" height="6" xlink:href="data:img/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAGCAYAAAAVMmT4AAAAKElEQVQYlWNkQID/DPgBIyMRiuCACV03LlORJYkyHd1kvADZWoIeBACEfwQJVIb55AAAAABJRU5ErkJggg=="/>
+  <image class="eyes" x="5" y="6" width="7" height="1" xlink:href="data:img/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAABCAYAAAASC7TOAAAAGklEQVQImU3BsQEAAACCIP3/aFsDgQArntoAUwUFAYzPi9wAAAAASUVORK5CYII="/>
+  <image class="hair" x="2" width="11" height="5" xlink:href="data:img/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAFCAYAAACTphZWAAAAJ0lEQVQImWNkQAX/GbADRjiBRxGKBlIUMzASq5CBgYGBBd1deMB/AFY4BQeNndiNAAAAAElFTkSuQmCC"/>
+</svg>

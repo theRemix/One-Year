@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16" height="10" viewBox="0 0 16 10">
+  <image class="beard" x="3" y="7" width="11" height="3" xlink:href="data:img/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAADCAYAAABF//VLAAAAVUlEQVQImWNkYGDIYkADW+c3TmVgYGDwTqzPhom9vbF5FsPW+Y3/t85v/A/VlLVjUQucvXNx6/+t8xv/b1vQ9J+BgYGBEWrSf3TTkYF3Yj0jAwMDAwB6qR43rwzj7gAAAABJRU5ErkJggg=="/>
+  <image class="skin" x="2" y="3" width="12" height="6" xlink:href="data:img/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAGCAYAAAD37n+BAAAATUlEQVQYlY2Oyw3AIAxDn6sOwf4rsAxLMIM5ABWCqMKHJLL8iWwDIMmAgE6ckO0xuvgG+ksMDc9ORKpa8jt2moKo5Xi3lrwX4MW83h8aY6cdhkkH6RIAAAAASUVORK5CYII="/>
+  <image class="eyes" x="5" y="6" width="7" height="1" xlink:href="data:img/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAABCAYAAAASC7TOAAAAH0lEQVQImWNkYGD4////f8Z3N7cwwICQug8DNzfbfwCSDQga8EZGHAAAAABJRU5ErkJggg=="/>
+  <image class="hair" x="2" width="11" height="5" xlink:href="data:img/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAFCAYAAACTphZWAAAAKklEQVQImWNkQAX/GbADRjiBRxGKBlIUwxX+R2LjU8fwX1legRGPIjgAAFU8CGG0NQ9LAAAAAElFTkSuQmCC"/>
+</svg>

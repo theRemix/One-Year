@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16" height="7" viewBox="0 0 16 7">
+  <image class="skin" y="3" width="16" height="4" xlink:href="data:img/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAECAYAAACHtL/sAAAANUlEQVQYlY2NMRIAIAyDoP//c5zUDurJHIhsAgiQhBMqSVDXtpr8hdoPqSZ7Em6dGann7IMBC7AMCS4KvHsAAAAASUVORK5CYII="/>
+  <image class="shirt" x="4" y="1" width="8" height="6" xlink:href="data:img/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAGCAYAAAD+Bd/7AAAAOUlEQVQImYWOwQkAIAwDc90fZ3EK14ofsVgR71OaHKXYthLW3FnoxGVXjN54SQD1wsVXQJLKo1kCEzSODQ4xK8/GAAAAAElFTkSuQmCC"/>
+  <image class="skin-shadow" x="3" width="10" height="4" xlink:href="data:img/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAECAYAAAC3OK7NAAAALUlEQVQImY3MQQoAIBDDwB3//+d6ElZFMMc2RJLqYA36N+qTgWCLnhLyKl7yBIPVCQ6/8LksAAAAAElFTkSuQmCC"/>
+</svg>
