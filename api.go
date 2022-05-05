@@ -27,11 +27,40 @@ const (
 func host(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/x-protobuf")
 
+	var body []byte
+	var bytes []byte
+	var err error
+
 	switch action := chi.URLParam(r, "action"); action {
-	case "":
+	case "create":
+		body, err = ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Printf("Error reading body: %v", err)
+			http.Error(w, "can't read body", http.StatusBadRequest)
+			return
+		}
+
+		join := &pb.Join{}
+		if err = proto.Unmarshal(body, join); err != nil {
+			fmt.Println("Error decoding pb.Join: ", err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// @TODO check if join code is available
+
+		status := &pb.Status{
+			Code: pb.Status_Success,
+		}
+		bytes, err = proto.Marshal(status)
+		if err != nil {
+			fmt.Println("Error encoding pb.Status: ", err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 
-	// w.Write(bytes)
+	w.Write(bytes)
 }
 
 func join(w http.ResponseWriter, r *http.Request) {
@@ -110,6 +139,7 @@ func playerReady(w http.ResponseWriter, r *http.Request) {
 	peJson, err := mo.Marshal(pe)
 
 	events.SendMessage(playerChannel+join.Code, sse.SimpleMessage(string(peJson)))
+	events.SendMessage(hostChannel+join.Code, sse.SimpleMessage(string(peJson)))
 }
 
 func create(w http.ResponseWriter, r *http.Request) {

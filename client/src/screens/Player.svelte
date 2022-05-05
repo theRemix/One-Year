@@ -1,5 +1,4 @@
 <script>
-  const params = new URLSearchParams(window.location.search)
   const name = localStorage.getItem('name')
   const code = localStorage.getItem('code')
 

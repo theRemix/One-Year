@@ -1,9 +1,9 @@
 <script>
   import "../pb/messages_pb.js"
 
-  $: code = ''
-  $: name = ''
-  $: errMessage = ''
+  let code = ''
+  let name = ''
+  let errMessage = ''
 
   const join = () => {
 

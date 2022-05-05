@@ -1,37 +1,40 @@
 * Client
-** Routes [2/6]
+** Routes [2/5]
   - [X] /
     - btn: Join -> /join
   - [X] /join
     - input: game code
     - input: your name
     - btn: Join -> /player
-  - [ ] /player
-    - Waiting...
-    - API: POST /api/player/ready
-    - SSE: /events/player
-    - Prompt
-    - Contestant 1's name
-      -  btn: Option 1 name
-      -  btn: Option 2 name
-      -  btn: Option 3 name
-    - Contestant 2's name
-      -  btn: Option 1 name
-      -  btn: Option 2 name
-      -  btn: Option 3 name
-  - [ ] /create
-    - input: game code
-    - btn: Create -> /host?code
-  - [ ] /host?code
-    - SSE: /events/host
-    - input: prompt
-    - input array: option names
-    - input array: contestant names
-    - btn: send prompt
-    - input array: contestant winning options
-    - btn: resolve bets
-    - btn: next prompt
-    - render: table of connected players, current bets
+  - [-] /player [2/3]
+    - [X] Waiting...
+        - API: POST /api/player/ready
+    - [X] SSE: /events/player
+    - [ ] Prompt
+        - Contestant 1's name
+          -  btn: Option 1 name
+          -  btn: Option 2 name
+          -  btn: Option 3 name
+        - Contestant 2's name
+          -  btn: Option 1 name
+          -  btn: Option 2 name
+          -  btn: Option 3 name
+  - [-] /host [3/6]
+    - [X] Create Game
+      - input: game code
+      - btn: Create
+    - [X] SSE: /events/host
+    - [ ] Create Prompt
+        - input: prompt
+        - input array: option names
+        - input array: contestant names
+        - btn: send prompt
+    - [X] render: table of connected players
+    - [ ] render: current bets
+    - [ ] Resolve Winners
+        - input array: contestant winning options
+        - btn: resolve bets
+        - btn: next prompt
   - [ ] /stage?code
     - SSE: /events/stage
     - read only screen
@@ -43,15 +46,15 @@
 ** API [2/6]
   - [X] POST /api/join 
   - [X] POST /api/player/ready
-  - [ ] POST /api/create
+  - [ ] POST /api/host/create {code}
     - body: code
     - creates random host key
-  - [ ] POST /api/host/prompt?code&key
+  - [ ] POST /api/host/prompt {code, key, payload}
     - body: prompt, contestant_names, options 
-  - [ ] POST /api/host/resolve?code&key 
+  - [ ] POST /api/host/resolve {code, key, payload} 
     - body: answers
-  - [ ] POST /api/host/next?code&key 
-** SSE [/]
-  - [ ] /events/player/{code}
-  - [ ] /events/host/{code}
+  - [ ] POST /api/host/next {code, key, payload} 
+** SSE [2/3]
+  - [X] /events/player/{code}
+  - [X] /events/host/{code}
   - [ ] /events/stage/{code}
