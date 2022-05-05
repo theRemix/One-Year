@@ -5,6 +5,15 @@ prompt game thing
 ## Dev
 
 api and client are at http://localhost:4000
+
+### Protobuf
+
+```sh
+protoc \
+  --go_out=. \
+  --js_out=import_style=commonjs,binary:./client/src \
+  pb/messages.proto
+```
  
 ### Dependencies
 

@@ -1,0 +1,46 @@
+/* protoc -I=$SRC_DIR --go_out=$DST_DIR $SRC_DIR/addressbook.proto */
+/* protoc --go_out=$DST_DIR $SRC_DIR/addressbook.proto */
+/* protoc --go_out=. --proto_path=. messages.proto */
+
+syntax = "proto3";
+option go_package = "./pb";
+
+message Join {
+  string code = 1;
+  string name = 2;
+}
+
+message Status {
+  enum Code {
+    Success = 0;
+    ClientError = 1;
+    ServerError = 2;
+  }
+
+  Code code = 1;
+  string errorMessage = 2;
+}
+
+message Ready {
+  enum Status {
+    Success = 0;
+    ClientError = 1;
+    ServerError = 2;
+  }
+
+  Status status = 1;
+}
+
+message PlayerEvent {
+  enum Op {
+    None = 0; // default value gets omitted in json
+    Ready = 1;
+  }
+
+  Op op = 1;
+  
+  // Ready
+  string name = 2;
+
+
+}

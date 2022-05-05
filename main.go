@@ -21,11 +21,11 @@ func main() {
 	r.Use(middleware.Logger)
 
 	r.Use(cors.Handler(cors.Options{
-    AllowedOrigins:   []string{"https://*", "http://*"},
+		AllowedOrigins:   []string{"https://*", "http://*"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
-    AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
-  }))
+	}))
 
 	workDir, _ := os.Getwd()
 	staticDir := http.Dir(filepath.Join(workDir, "client/public"))

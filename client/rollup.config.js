@@ -16,17 +16,14 @@ export default {
 		sourcemap: true,
 		format: 'iife',
 		name: 'app',
-		file: process.env.TWITCH == 'true' ? 'twitch-ext/build/bundle.js' : 'public/build/bundle.js'
+		file: 'public/build/bundle.js',
+    globals: {
+      jspb: 'google-protobuf'
+    }
 	},
 	plugins: [
 		replace({
 			preventAssignment: true,
-      process: JSON.stringify({
-        env: {
-          isTwitchExt: process.env.TWITCH == 'true',
-					apiBase: process.env.TWITCH_RIG != 'true' ? 'https://base64party.gomagames.com' : 'http://localhost:4000'
-        }
-      }),
     }),
 		svelte({
 			compilerOptions: {
@@ -52,7 +49,7 @@ export default {
 
 		// Watch the `public` directory and refresh the
 		// browser on changes when not in production
-		!production && livereload(process.env.TWITCH == 'true' ? 'twitch-ext' : 'public'),
+		!production && livereload('public'),
 
 		// If we're building for production (npm run build
 		// instead of npm run dev), minify
