@@ -7,7 +7,7 @@ option go_package = "./pb";
 
 message Join {
   string code = 1;
-  string name = 2;
+  string playerName = 2;
 }
 
 message Status {
@@ -35,12 +35,34 @@ message PlayerEvent {
   enum Op {
     None = 0; // default value gets omitted in json
     Ready = 1;
+    Prompt = 2;
+    Answered = 3;
   }
 
   Op op = 1;
   
   // Ready
-  string name = 2;
+  string playerName = 2;
 
+  // Prompt
+  Prompt prompt = 3;
+}
 
+message Prompt {
+  string playerName = 1;
+  string code = 2;
+  string key = 3;
+  repeated string contestants = 4;
+  repeated string options = 5;
+}
+
+message PromptAnswer {
+  message Answer {
+    string contestant = 1;
+    string option = 2;
+  }
+
+  string code = 1;
+  string playerName = 2;
+  repeated Answer answers = 3;
 }

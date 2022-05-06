@@ -6,6 +6,7 @@
     JOINING: 0,
     CONNECTING: 1,
     WAITING: 2,
+    RESOLVE: 3,
   }
 
   $: gameState = GameState.JOINING
@@ -19,6 +20,11 @@
   const addPlayerName = playerName => {
     playerNamesSet.add(playerName)
     playerNames = [...playerNamesSet]
+  }
+
+  let prompt = {
+    contestants: [],
+    options: [],
   }
 
   // ====================== SSE =====================
@@ -35,7 +41,11 @@
         if (payload.name === name) {
           gameState = GameState.WAITING
         } 
-        addPlayerName(payload.name)
+        addPlayerName(payload.playerName)
+        break
+      case proto.PlayerEvent.Op.PROMPT:
+        gameState = GameState.PROMPT
+        prompt = payload.prompt
         break
       default:
         console.warn(`SSE received unsupported Op: ${op}`)
@@ -53,7 +63,7 @@
 
   const msg = new proto.Join();
 
-  msg.setName(name);
+  msg.setPlayername(name);
   msg.setCode(code);
 
   const body = msg.serializeBinary()
@@ -77,6 +87,48 @@
   });
 
 
+  // ====================== PROMPT =====================
+
+  let answers = new Map()
+  const chooseOption = (contestant, option) => {
+    answers.set(contestant, option)
+  }
+
+  const submit = () => {
+    const msg = new proto.PromptAnswer()
+    const answerMsgs = []
+
+    for (let [contestant, option] of answers.entries()) {
+      const answerMsg = new proto.PromptAnswer.Answer()
+      answerMsg.setContestant(contestant)
+      answerMsg.setOption(option)
+      answerMsgs.push(answerMsg)
+    }
+
+    msg.setPlayername(name)
+    msg.setCode(code)
+    msg.setAnswersList(answerMsgs)
+
+    const body = msg.serializeBinary()
+
+    fetch('/api/player/answer', {
+      method: 'POST',
+      'content-type': 'application/x-protobuf',
+      body,
+    })
+    .then(response => response.arrayBuffer())
+    .then(data => {
+      const bytes = new Uint8Array(data);
+      const status = proto.Status.deserializeBinary(bytes)
+      if(status.getCode() === proto.Status.Code.SUCCESS){
+        gameState = GameState.RESOLVE
+      } else {
+        errMessage = status.getErrormessage() || 'Error (no message)'
+      }
+    })
+  }
+
+
 
 </script>
 
@@ -87,6 +139,30 @@
     <div class="connecting">Connecting...</div>
   {:else if gameState == GameState.WAITING}
     <div class="waiting">Waiting...</div>
+  {:else if gameState == GameState.PROMPT}
+    <div class="prompt">
+      <h2>{prompt.name}</h2>
+      <div class="contestants">
+        {#each prompt.contestants as contestant}
+          <div class="contestant">
+            <h3>{contestant}</h3>
+            <div class="options">
+              {#each prompt.options as option}
+                <div class="option">
+                  <label>
+                    <input type="radio" name="{contestant}" value="{option}" on:click={chooseOption({contestant},{option})}> {option}
+                  </label>
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/each}
+      </div>
+
+      <button on:click={submit}>Submit Answer</button>
+    </div>
+  {:else if gameState == GameState.RESOLVE}
+    <div class="resolve">Waiting for host to select winners...</div>
   {/if}
 
   <p class="error">{errMessage}</p>

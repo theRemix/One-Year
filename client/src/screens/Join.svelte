@@ -9,7 +9,7 @@
 
     const msg = new proto.Join();
 
-    msg.setName(name);
+    msg.setPlayername(name);
     msg.setCode(code);
 
     const body = msg.serializeBinary();

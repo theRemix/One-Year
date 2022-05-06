@@ -1,17 +1,15 @@
 <script>
   const HostState = {
-    CREATE: 0,
-    WAITING: 1,
+    CREATE_GAME: 0,
+    PROMPT: 1,
+    RESOLVE: 2,
   }
 
-  let code = localStorage.getItem('code')
-  let hostState = HostState.CREATE
-  let errMessage = ""
+  let hostState = HostState.CREATE_GAME
 
-  /* if (code) { // restore previous session */
-  /*   hostState = HostState.WAITING */
-  /*   startSSE() */
-  /* } */
+  let code = localStorage.getItem('code')
+
+  let errMessage = ""
 
   // ==================== State =====================
 
@@ -22,6 +20,12 @@
     playerNames = [...playerNamesSet]
   }
 
+  const playersAnsweredSet = new Set()
+  $: playersAnswered = []
+  const setPlayerAnswered = playerName => {
+    playersAnsweredSet.add(playerName)
+    playersAnswered = [...playersAnsweredSet]
+  }
 
   // ====================== SSE =====================
   
@@ -37,9 +41,12 @@
       switch (op) {
         case proto.PlayerEvent.Op.READY:
           if (payload.name === name) {
-            gameState = GameState.WAITING
+            gameState = GameState.PROMPT
           } 
-          addPlayerName(payload.name)
+          addPlayerName(payload.playerName)
+          break
+        case proto.PlayerEvent.Op.ANSWERED:
+          setPlayerAnswered(payload.playerName)
           break
         default:
           console.warn(`SSE received unsupported Op: ${op}`)
@@ -53,6 +60,12 @@
     }
   }
 
+  // ============ Restore Ongoing Game =================
+
+  if (code) {
+    hostState = HostState.PROMPT
+    startSSE()
+  }
 
   // ====================== Create =====================
 
@@ -73,8 +86,9 @@
       const bytes = new Uint8Array(data);
       const status = proto.Status.deserializeBinary(bytes)
       if(status.getCode() === proto.Status.Code.SUCCESS){
-        if(hostState === HostState.CREATE){ // prevent race with sse
-          hostState = HostState.WAITING
+        if(hostState === HostState.CREATE_GAME){ // prevent race with sse
+          localStorage.setItem('code', code)
+          hostState = HostState.PROMPT
           startSSE()
         }
       } else {
@@ -83,20 +97,115 @@
     });
   }
 
+  // ====================== Prompts =====================
 
+  let promptName
+
+  const sendPrompt = () => {
+    const msg = new proto.Prompt()
+
+    msg.setPlayername(promptName)
+    msg.setCode(code)
+    /* msg.setKey(key) */
+    msg.setContestantsList(contestants)
+    msg.setOptionsList(options)
+
+    const body = msg.serializeBinary()
+
+    fetch('/api/host/prompt', {
+      method: 'POST',
+      'content-type': 'application/x-protobuf',
+      body,
+    })
+    .then(response => response.arrayBuffer())
+    .then(data => {
+      const bytes = new Uint8Array(data);
+      const status = proto.Status.deserializeBinary(bytes)
+      if(status.getCode() === proto.Status.Code.SUCCESS){
+        hostState = HostState.RESOLVE
+      } else {
+        errMessage = status.getErrormessage() || 'Error (no message)'
+      }
+    });
+  }
+
+  // ==================== Contestants ===================
+
+  $: contestants = JSON.parse(localStorage.getItem('contestants') || '[]')
+  let addContestantName
+  const addContestant = () => {
+    contestants = [...contestants, addContestantName]
+    localStorage.setItem('contestants', JSON.stringify(contestants))
+    addContestantName = ''
+  }
+  const removeContestant = contestantName => {
+
+  }
+
+  // ====================== Options =====================
+  
+  $: options = JSON.parse(localStorage.getItem('options') || '[]')
+  let addOptionName
+  const addOption = () => {
+    options = [...options, addOptionName]
+    localStorage.setItem('options', JSON.stringify(options))
+    addOptionName = ''
+  }
+  const removeOption = optionName => {
+
+  }
+
+  // ===================== End Game =====================
+  const endGame = () => {
+
+    localStorage.clear()
+
+  }
 
 </script>
 
 <main>
-  {#if hostState == HostState.CREATE}
+  {#if hostState == HostState.CREATE_GAME}
     <div class="create-game">
       <h2>Create Game</h2>
       <input type="text" placeholder="Code" bind:value={code} maxlength="6">
-      <button on:click={createGame}>Create</button>
+      <button class="big-btn" on:click={createGame}>Create</button>
     </div>
-  {:else if hostState == HostState.WAITING}
-    <div class="host-waiting">
+  {:else if hostState == HostState.PROMPT}
+    <div class="host-prompt">
       <h3>Game Code: {code}</h3>
+
+      <div class="prompt-form">
+        <input type="text" placeholder="Prompt" bind:value={promptName}>
+
+        <div class="input-contestants">
+          <input type="text" placeholder="Add Contestant" bind:value={addContestantName}>
+          <button class="big-btn" on:click={addContestant}>Add</button>
+          <ul class="contestants">
+            {#each contestants as contestant}
+              <li>{contestant}
+                <button class="tiny-btn" on:click={removeContestant(contestant)}>❌</button>
+              </li>
+            {/each}
+          </ul>
+        </div>
+
+        <div class="input-options">
+          <input type="text" placeholder="Add Option" bind:value={addOptionName}>
+          <button class="big-btn" on:click={addOption}>Add</button>
+          <ul class="options">
+            {#each options as option}
+              <li>{option}
+                <button class="tiny-btn" on:click={removeOption(option)}>❌</button>
+              </li>
+            {/each}
+          </ul>
+        </div>
+
+        <button class="big-btn" on:click={sendPrompt}>Send Prompt</button>
+      </div>
+
+      <button class="big-btn" on:click={endGame}>End Game</button>
     </div>
   {/if}
 
@@ -106,7 +215,7 @@
     <h3>Connected Players</h3>
     <ul>
       {#each playerNames as playerName}
-        <li>{playerName}</li>
+        <li class={ playersAnswered.includes(playerName) ? "answered" : ""}>{playerName} { playersAnswered.includes(playerName) ? "✓" : "…"}</li>
       {/each}
     </ul>
   </div>
@@ -126,14 +235,17 @@
   /* h1 { */
   /*   font-size: 30px; */
   /* } */
-  button {
+  button.big-btn {
     margin: 0 auto;
-    margin-top: 100px;
     padding: 20px;
     color: #4F8132;
     display: block;
     width: 300px;
     font-size: 14px;
+  }
+  button.tiny-btn {
+    color: #4F8132;
+    font-size: 10px;
   }
   button:hover {
     text-decoration: none;

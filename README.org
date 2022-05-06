@@ -1,16 +1,16 @@
 * Client
-** Routes [2/5]
+** Routes [3/5]
   - [X] /
     - btn: Join -> /join
   - [X] /join
     - input: game code
     - input: your name
     - btn: Join -> /player
-  - [-] /player [2/3]
+  - [X] /player [3/3]
     - [X] Waiting...
         - API: POST /api/player/ready
     - [X] SSE: /events/player
-    - [ ] Prompt
+    - [X] Prompt
         - Contestant 1's name
           -  btn: Option 1 name
           -  btn: Option 2 name
@@ -19,12 +19,13 @@
           -  btn: Option 1 name
           -  btn: Option 2 name
           -  btn: Option 3 name
-  - [-] /host [3/6]
+        -  btn: Submit Answer
+  - [-] /host [4/6]
     - [X] Create Game
       - input: game code
       - btn: Create
     - [X] SSE: /events/host
-    - [ ] Create Prompt
+    - [X] Create Prompt
         - input: prompt
         - input array: option names
         - input array: contestant names
@@ -35,6 +36,7 @@
         - input array: contestant winning options
         - btn: resolve bets
         - btn: next prompt
+        - btn: back
   - [ ] /stage?code
     - SSE: /events/stage
     - read only screen
@@ -46,6 +48,7 @@
 ** API [2/6]
   - [X] POST /api/join 
   - [X] POST /api/player/ready
+  - [X] POST /api/player/answer
   - [ ] POST /api/host/create {code}
     - body: code
     - creates random host key
