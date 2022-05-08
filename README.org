@@ -45,18 +45,17 @@
       - their winning guesses
       - all player leaderboards
 * Server
-** API [2/6]
+** API [5/7]
   - [X] POST /api/join 
   - [X] POST /api/player/ready
   - [X] POST /api/player/answer
   - [ ] POST /api/host/create {code}
     - body: code
     - creates random host key
-  - [ ] POST /api/host/prompt {code, key, payload}
+  - [X] POST /api/host/prompt {code, key, payload}
     - body: prompt, contestant_names, options 
-  - [ ] POST /api/host/resolve {code, key, payload} 
+  - [X] POST /api/host/resolve {code, key, payload} 
     - body: answers
-  - [ ] POST /api/host/next {code, key, payload} 
 ** SSE [2/3]
   - [X] /events/player/{code}
   - [X] /events/host/{code}

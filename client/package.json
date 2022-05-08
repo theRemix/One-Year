@@ -21,6 +21,10 @@
   },
   "main": "index.js",
   "license": "MIT",
+  "engines": {
+    "node": "v16.15.0",
+    "npm": "7.9.0"
+  },
   "dependencies": {
     "@beyonk/svelte-google-analytics": "^2.0.0",
     "@rollup/plugin-json": "^4.1.0",
