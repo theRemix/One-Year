@@ -1,5 +1,4 @@
 /node_modules/
 /public/build/
-/twitch-ext/build/
-/twitch-ext/img/
+/public/assets/
 .DS_Store
