@@ -18,13 +18,23 @@
   const addPlayerName = playerName => {
     playerNamesSet.add(playerName)
     playerNames = [...playerNamesSet]
+
+    if (!playerScores.hasOwnProperty(playerName)) {
+      playerScores = {
+        ...playerScores,
+        [playerName]: 0,
+      }
+    }
   }
 
-  const playersAnsweredSet = new Set()
+  const playerAnswers = new Map()
   $: playersAnswered = []
-  const setPlayerAnswered = playerName => {
-    playersAnsweredSet.add(playerName)
-    playersAnswered = [...playersAnsweredSet]
+  const setPlayerAnswer = ({playerName, answers}) => {
+    // save answer
+    playerAnswers.set(playerName, answers)
+
+    // mark as answered
+    playersAnswered = [...playerAnswers.keys()]
   }
 
   // ====================== SSE =====================
@@ -41,12 +51,12 @@
       switch (op) {
         case proto.PlayerEvent.Op.READY:
           if (payload.name === name) {
-            gameState = GameState.PROMPT
+            hostState = HostState.PROMPT
           } 
           addPlayerName(payload.playerName)
           break
         case proto.PlayerEvent.Op.ANSWERED:
-          setPlayerAnswered(payload.playerName)
+          setPlayerAnswer(payload.answer)
           break
         default:
           console.warn(`SSE received unsupported Op: ${op}`)
@@ -104,7 +114,7 @@
   const sendPrompt = () => {
     const msg = new proto.Prompt()
 
-    msg.setPlayername(promptName)
+    msg.setName(promptName)
     msg.setCode(code)
     /* msg.setKey(key) */
     msg.setContestantsList(contestants)
@@ -135,6 +145,7 @@
   let addContestantName
   const addContestant = () => {
     contestants = [...contestants, addContestantName]
+    prompt.contestants = contestants
     localStorage.setItem('contestants', JSON.stringify(contestants))
     addContestantName = ''
   }
@@ -148,12 +159,95 @@
   let addOptionName
   const addOption = () => {
     options = [...options, addOptionName]
+    prompt.options = options
     localStorage.setItem('options', JSON.stringify(options))
     addOptionName = ''
   }
   const removeOption = optionName => {
 
   }
+
+  // ====================== RESOLVE =====================
+
+  let playerScores = {}
+  const setPlayerScore = (playerName, score) => {
+    playerScores = {
+      ...playerScores,
+      [playerName]: score
+    }
+  }
+
+  let playerAwardedPoints = {}
+  const awardPlayerPoints = (playerName, points) => {
+    if (!playerAwardedPoints.hasOwnProperty(playerName)) {
+      playerAwardedPoints[playerName] = 0
+    }
+
+    playerAwardedPoints = {
+      ...playerAwardedPoints,
+      [playerName]: playerAwardedPoints[playerName] + points
+    }
+  }
+
+  let hostAnswers = new Map()
+  const chooseOption = (contestant, option) => {
+    hostAnswers.set(contestant, option)
+  }
+
+  const resolve = () => {
+    playerAwardedPoints = {}
+
+    for (let [pName, pAnswers] of playerAnswers.entries()) {
+      for (let pAnswer of pAnswers) {
+        for (let [contestant, option] of hostAnswers.entries()) {
+          if (
+            pAnswer.contestant === contestant && 
+            pAnswer.option === option
+          ) {
+            awardPlayerPoints(pName, 1)
+          }
+        }
+      }
+    }
+
+    const resolveMsg = new proto.Resolve()
+    resolveMsg.setCode(code)
+    /* resolveMsg.setKey(key) */
+    const playerScoresMsgs = []
+  
+    for (let playerName of playerNames) {
+      const points = playerAwardedPoints[playerName] || 0
+
+      setPlayerScore(playerName, playerScores[playerName] + points)
+
+      const playerMsg = new proto.PlayerScore()
+      playerMsg.setName(playerName)
+      playerMsg.setScorechange(points)
+      playerMsg.setNewscore(playerScores[playerName])
+      playerScoresMsgs.push(playerMsg)
+    }
+
+    resolveMsg.setPlayerscoresList(playerScoresMsgs)
+
+    const body = resolveMsg.serializeBinary()
+
+    fetch('/api/host/resolve', {
+      method: 'POST',
+      'content-type': 'application/x-protobuf',
+      body,
+    })
+    .then(response => response.arrayBuffer())
+    .then(data => {
+      const bytes = new Uint8Array(data);
+      const status = proto.Status.deserializeBinary(bytes)
+      if(status.getCode() === proto.Status.Code.SUCCESS){
+        hostState = HostState.PROMPT
+      } else {
+        errMessage = status.getErrormessage() || 'Error (no message)'
+      }
+    })
+  }
+
 
   // ===================== End Game =====================
   const endGame = () => {
@@ -207,15 +301,52 @@
 
       <button class="big-btn" on:click={endGame}>End Game</button>
     </div>
+  {:else if hostState == HostState.RESOLVE}
+    <div class="resolve">
+      <h2>{promptName}</h2>
+      <div class="contestants">
+        {#each contestants as contestant}
+          <div class="contestant">
+            <h3>{contestant}</h3>
+            <div class="options">
+              {#each options as option}
+                <div class="option">
+                  <label>
+                    <input type="radio" name="{contestant}" value="{option}" on:click={chooseOption(contestant,option)}> {option}
+                  </label>
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/each}
+      </div>
+
+      <button on:click={resolve}>Resolve</button>
+    </div>
   {/if}
 
   <p class="error">{errMessage}</p>
 
   <div class="player-name-list">
-    <h3>Connected Players</h3>
+    <h3>Players</h3>
     <ul>
       {#each playerNames as playerName}
-        <li class={ playersAnswered.includes(playerName) ? "answered" : ""}>{playerName} { playersAnswered.includes(playerName) ? "✓" : "…"}</li>
+        <li class={ playersAnswered.includes(playerName) ? "answered" : ""}>
+          <span class="player-name">
+            {playerName} 
+          </span>
+          <span class="player-answered">
+            {playersAnswered.includes(playerName) ? "✓" : "…"}
+          </span>
+          <span class="player-score">
+            {playerScores[playerName]}
+          </span>
+          {#if playerAwardedPoints[playerName] > 0}
+            <span class="player-score-increase">
+              (⬆ {playerAwardedPoints[playerName]})
+            </span>
+          {/if}
+        </li>
       {/each}
     </ul>
   </div>

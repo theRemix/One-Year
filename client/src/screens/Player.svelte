@@ -6,7 +6,8 @@
     JOINING: 0,
     CONNECTING: 1,
     WAITING: 2,
-    RESOLVE: 3,
+    PROMPT: 3,
+    RESOLVE: 4,
   }
 
   $: gameState = GameState.JOINING
@@ -16,8 +17,20 @@
   // ==================== State =====================
 
   const playerNamesSet = new Set()
-  $: playerNames = []
+  let playerNames = []
+  let playerScores = {}
+  let curPlayerScore = 0
+  let curPlayerStatus = ''
+
   const addPlayerName = playerName => {
+    playerScores = {
+      ...playerScores,
+      [playerName]: {
+        newScore: 0,
+        scoreChange: 0,
+      },
+    }
+
     playerNamesSet.add(playerName)
     playerNames = [...playerNamesSet]
   }
@@ -46,6 +59,29 @@
       case proto.PlayerEvent.Op.PROMPT:
         gameState = GameState.PROMPT
         prompt = payload.prompt
+
+        // reset some props from last round
+        curPlayerStatus = ''
+        playerScores = Object.entries(playerScores)
+          .reduce((ps,[name, score]) => ({
+            ...ps,
+            [name]: {
+              ...score,
+              scoreChange: 0,
+            }
+          }), {})
+        break
+      case proto.PlayerEvent.Op.RESOLVED:
+        gameState = GameState.WAITING
+        playerScores = payload.playerScores.reduce((ps,s) => ({
+          ...ps,
+          [s.name]: { // 0 is omitted
+            scoreChange: s.scoreChange || 0,
+            newScore: s.newScore || 0, 
+          }
+        }), {})
+        curPlayerScore = playerScores[name].newScore
+        curPlayerStatus = `You earned ${playerScores[name].scoreChange} points`
         break
       default:
         console.warn(`SSE received unsupported Op: ${op}`)
@@ -133,6 +169,13 @@
 </script>
 
 <main>
+  {#if [GameState.WAITING, GameState.PROMPT, GameState.RESOLVE].includes(gameState) }
+    <div class="my-scores">
+      <div class="my-score-status">{curPlayerStatus}</div>
+      <div class="my-score">Score: {curPlayerScore}</div>
+    </div>
+  {/if}
+
   {#if gameState == GameState.JOINING}
     <div class="joining">Joining...</div>
   {:else if gameState == GameState.CONNECTING}
@@ -150,7 +193,7 @@
               {#each prompt.options as option}
                 <div class="option">
                   <label>
-                    <input type="radio" name="{contestant}" value="{option}" on:click={chooseOption({contestant},{option})}> {option}
+                    <input type="radio" name={contestant} value={option} on:click={chooseOption(contestant,option)}> {option}
                   </label>
                 </div>
               {/each}
@@ -168,10 +211,22 @@
   <p class="error">{errMessage}</p>
 
   <div class="player-name-list">
-    <h3>Connected Players</h3>
+    <h3>Players</h3>
     <ul>
       {#each playerNames as playerName}
-        <li>{playerName}</li>
+        <li>
+          <span class="player-name">
+            {playerName} 
+          </span>
+          <span class="player-score">
+            {playerScores[playerName].newScore}
+          </span>
+          {#if playerScores[playerName].scoreChange > 0}
+            <span class="player-score-increase">
+              (⬆ {playerScores[playerName].scoreChange})
+            </span>
+          {/if}
+        </li>
       {/each}
     </ul>
   </div>

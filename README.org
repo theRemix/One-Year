@@ -1,5 +1,5 @@
 * Client
-** Routes [3/5]
+** Routes [4/5]
   - [X] /
     - btn: Join -> /join
   - [X] /join
@@ -20,7 +20,7 @@
           -  btn: Option 2 name
           -  btn: Option 3 name
         -  btn: Submit Answer
-  - [-] /host [4/6]
+  - [X] /host [6/6]
     - [X] Create Game
       - input: game code
       - btn: Create
@@ -31,8 +31,8 @@
         - input array: contestant names
         - btn: send prompt
     - [X] render: table of connected players
-    - [ ] render: current bets
-    - [ ] Resolve Winners
+    - [X] render: current bets
+    - [X] Resolve Winners
         - input array: contestant winning options
         - btn: resolve bets
         - btn: next prompt

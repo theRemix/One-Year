@@ -31,12 +31,19 @@ message Ready {
   Status status = 1;
 }
 
+message PlayerScore {
+  string name = 1;
+  int32 scoreChange = 2;
+  int32 newScore = 3;
+}
+
 message PlayerEvent {
   enum Op {
     None = 0; // default value gets omitted in json
     Ready = 1;
     Prompt = 2;
     Answered = 3;
+    Resolved = 4;
   }
 
   Op op = 1;
@@ -46,10 +53,16 @@ message PlayerEvent {
 
   // Prompt
   Prompt prompt = 3;
+
+  // Answered
+  PromptAnswer answer = 4;
+
+  // Resolved
+  repeated PlayerScore playerScores = 5;
 }
 
 message Prompt {
-  string playerName = 1;
+  string name = 1;
   string code = 2;
   string key = 3;
   repeated string contestants = 4;
@@ -65,4 +78,10 @@ message PromptAnswer {
   string code = 1;
   string playerName = 2;
   repeated Answer answers = 3;
+}
+
+message Resolve {
+  string code = 1;
+  string key = 2;
+  repeated PlayerScore playerScores = 3;
 }
