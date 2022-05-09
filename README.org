@@ -37,13 +37,6 @@
         - btn: resolve bets
         - btn: next prompt
         - btn: back
-  - [ ] /stage?code
-    - SSE: /events/stage
-    - read only screen
-    - render: 
-      - list of winners
-      - their winning guesses
-      - all player leaderboards
 * Server
 ** API [5/7]
   - [X] POST /api/join 
@@ -59,4 +52,3 @@
 ** SSE [2/3]
   - [X] /events/player/{code}
   - [X] /events/host/{code}
-  - [ ] /events/stage/{code}
