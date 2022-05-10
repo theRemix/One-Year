@@ -35,6 +35,7 @@ message PlayerScore {
   string name = 1;
   int32 scoreChange = 2;
   int32 newScore = 3;
+  string comment = 4;
 }
 
 message PlayerEvent {
@@ -78,6 +79,7 @@ message PromptAnswer {
   string code = 1;
   string playerName = 2;
   repeated Answer answers = 3;
+  string comment = 4;
 }
 
 message Resolve {

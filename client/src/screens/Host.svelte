@@ -29,12 +29,18 @@
 
   const playerAnswers = new Map()
   $: playersAnswered = []
-  const setPlayerAnswer = ({playerName, answers}) => {
+  let comments = {}
+  const setPlayerAnswer = ({playerName, answers, comment}) => {
     // save answer
     playerAnswers.set(playerName, answers)
 
     // mark as answered
     playersAnswered = [...playerAnswers.keys()]
+
+    comments = {
+      ...comments,
+      [playerName]: comment
+    }
   }
 
   // ====================== SSE =====================
@@ -104,14 +110,17 @@
       } else {
         errMessage = status.getErrormessage() || 'Error (no message)'
       }
+      comments = {}
     });
   }
 
   // ====================== Prompts =====================
 
-  let promptName
+  let promptName = localStorage.getItem('promptName') || ''
 
   const sendPrompt = () => {
+    localStorage.setItem('promptName', promptName)
+
     const msg = new proto.Prompt()
 
     msg.setName(promptName)
@@ -150,7 +159,9 @@
     addContestantName = ''
   }
   const removeContestant = contestantName => {
-
+    contestants = [...contestants.filter(c => c !== contestantName)]
+    prompt.contestants = contestants
+    localStorage.setItem('contestants', JSON.stringify(contestants))
   }
 
   // ====================== Options =====================
@@ -164,7 +175,9 @@
     addOptionName = ''
   }
   const removeOption = optionName => {
-
+    options = [...options.filter(o => o !== optionName)]
+    prompt.options = options
+    localStorage.setItem('options', JSON.stringify(options))
   }
 
   // ====================== RESOLVE =====================
@@ -189,9 +202,12 @@
     }
   }
 
-  let hostAnswers = new Map()
+  let hostAnswers = {}
   const chooseOption = (contestant, option) => {
-    hostAnswers.set(contestant, option)
+    hostAnswers = {
+      ...hostAnswers,
+      [contestant]: option,
+    }
   }
 
   const resolve = () => {
@@ -199,7 +215,7 @@
 
     for (let [pName, pAnswers] of playerAnswers.entries()) {
       for (let pAnswer of pAnswers) {
-        for (let [contestant, option] of hostAnswers.entries()) {
+        for (let [contestant, option] of Object.entries(hostAnswers)) {
           if (
             pAnswer.contestant === contestant && 
             pAnswer.option === option
@@ -224,6 +240,7 @@
       playerMsg.setName(playerName)
       playerMsg.setScorechange(points)
       playerMsg.setNewscore(playerScores[playerName])
+      playerMsg.setComment(comments[playerName])
       playerScoresMsgs.push(playerMsg)
     }
 
@@ -245,15 +262,16 @@
       } else {
         errMessage = status.getErrormessage() || 'Error (no message)'
       }
+      hostAnswers = {}
     })
   }
 
 
   // ===================== End Game =====================
   const endGame = () => {
-
     localStorage.clear()
 
+    window.location.href = `/create`
   }
 
 </script>
@@ -269,51 +287,58 @@
     <div class="host-prompt">
       <h3>Game Code: {code}</h3>
 
-      <div class="prompt-form">
-        <input type="text" placeholder="Prompt" bind:value={promptName}>
+      <div class="prompt-section prompt-form">
+        <label>Prompt<br>
+          <input type="text" placeholder="Prompt" bind:value={promptName}>
+        </label>
+      </div>
 
-        <div class="input-contestants">
-          <input type="text" placeholder="Add Contestant" bind:value={addContestantName}>
-          <button class="big-btn" on:click={addContestant}>Add</button>
-          <ul class="contestants">
-            {#each contestants as contestant}
-              <li>{contestant}
-                <button class="tiny-btn" on:click={removeContestant(contestant)}>❌</button>
-              </li>
-            {/each}
-          </ul>
-        </div>
+      <div class="prompt-section input-contestants">
+        <input type="text" placeholder="Add Contestant" bind:value={addContestantName}>
+        <button class="medium-btn" on:click={addContestant}>Add</button>
+        <ul class="contestants">
+          {#each contestants as contestant}
+            <li>{contestant}
+              <button class="tiny-btn" on:click={removeContestant(contestant)}>❌</button>
+            </li>
+          {/each}
+        </ul>
+      </div>
 
-        <div class="input-options">
-          <input type="text" placeholder="Add Option" bind:value={addOptionName}>
-          <button class="big-btn" on:click={addOption}>Add</button>
-          <ul class="options">
-            {#each options as option}
-              <li>{option}
-                <button class="tiny-btn" on:click={removeOption(option)}>❌</button>
-              </li>
-            {/each}
-          </ul>
-        </div>
+      <div class="prompt-section input-options">
+        <input type="text" placeholder="Add Option" bind:value={addOptionName}>
+        <button class="medium-btn" on:click={addOption}>Add</button>
+        <ul class="options">
+          {#each options as option}
+            <li>{option}
+              <button class="tiny-btn" on:click={removeOption(option)}>❌</button>
+            </li>
+          {/each}
+        </ul>
+      </div>
 
+      <div class="prompt-section">
         <button class="big-btn" on:click={sendPrompt}>Send Prompt</button>
       </div>
 
-      <button class="big-btn" on:click={endGame}>End Game</button>
+      <div class="prompt-section ">
+        <button class="end-game-btn" on:click={endGame}>End Game</button>
+      </div>
     </div>
   {:else if hostState == HostState.RESOLVE}
     <div class="resolve">
       <h2>{promptName}</h2>
       <div class="contestants">
         {#each contestants as contestant}
-          <div class="contestant">
+          <div class="prompt-section contestant">
             <h3>{contestant}</h3>
             <div class="options">
               {#each options as option}
-                <div class="option">
-                  <label>
-                    <input type="radio" name="{contestant}" value="{option}" on:click={chooseOption(contestant,option)}> {option}
-                  </label>
+                <div 
+                  class="option {hostAnswers[contestant] === option ? 'option-selected' : ''}"
+                  on:click={chooseOption(contestant,option)}>
+                    {hostAnswers[contestant] === option ? '✅' : ''}
+                    {option}
                 </div>
               {/each}
             </div>
@@ -321,30 +346,37 @@
         {/each}
       </div>
 
-      <button on:click={resolve}>Resolve</button>
+      <div class="prompt-section">
+        <button class="big-btn" on:click={resolve}>Resolve</button>
+      </div>
     </div>
   {/if}
 
   <p class="error">{errMessage}</p>
 
   <div class="player-name-list">
-    <h3>Players</h3>
+    <h3>Scoreboard</h3>
     <ul>
       {#each playerNames as playerName}
-        <li class={ playersAnswered.includes(playerName) ? "answered" : ""}>
+        <li class={ playersAnswered.includes(playerName) ? "scoreboard answered" : "scoreboard "}>
           <span class="player-name">
             {playerName} 
-          </span>
-          <span class="player-answered">
-            {playersAnswered.includes(playerName) ? "✓" : "…"}
+            <span class="player-answered">
+              {playersAnswered.includes(playerName) ? "✓" : "…"}
+            </span>
           </span>
           <span class="player-score">
             {playerScores[playerName]}
           </span>
           {#if playerAwardedPoints[playerName] > 0}
             <span class="player-score-increase">
-              (⬆ {playerAwardedPoints[playerName]})
+              + {playerAwardedPoints[playerName]}
             </span>
+          {/if}
+          {#if comments[playerName] }
+            <p class="player-comment">
+              &ldquo;{comments[playerName]}&rdquo;
+            </p>
           {/if}
         </li>
       {/each}
@@ -354,34 +386,135 @@
 
 <style>
   main {
-    height: 100%;
     text-align: center;
     padding: 21px;
     margin: 0 auto;
     background-color: #333333;
     text-align: center;
     color: #ffffff;
-    font-family: 'Space Mono', monospace;
+    font-family: 'Pangolin', cursive;
   }
-  /* h1 { */
-  /*   font-size: 30px; */
-  /* } */
+  h2 {
+    font-family: 'Pangolin', cursive;
+    font-size: 1.8em;
+  }
+  h3 {
+    font-family: 'Pangolin', cursive;
+    font-size: 3em;
+  }
   button.big-btn {
     margin: 0 auto;
     padding: 20px;
     color: #4F8132;
     display: block;
     width: 300px;
-    font-size: 14px;
+    font-family: 'Pangolin', cursive;
+    font-weight: bold;
+    font-size: 1.8em;
+    background: rgba(66, 127, 207, .4);
+    border: 0px solid;
+    color: #fefefe;
+  }
+  button.medium-btn {
+    margin: 0 auto;
+    padding: 14px;
+    color: #4F8132;
+    display: block;
+    width: 200px;
+    font-family: 'Pangolin', cursive;
+    font-weight: bold;
+    font-size: 1.6em;
+    background: rgba(66, 127, 207, .4);
+    border: 0px solid;
+    color: #fefefe;
   }
   button.tiny-btn {
     color: #4F8132;
     font-size: 10px;
   }
+  button.end-game-btn {
+    margin: 0 auto;
+    margin-top: 18px;
+    padding: 20px;
+    color: #fafafa;
+    display: block;
+    width: 140px;
+    font-family: 'Pangolin', cursive;
+    font-weight: bold;
+    font-size: 1.2em;
+    background: rgba(66, 127, 207, .4);
+  }
+
   button:hover {
     text-decoration: none;
   }
   .error {
     color: #CC2010;
+  }
+
+  .prompt-section {
+    border: 2px solid #444;
+    padding: 18px;
+    margin-bottom: 12px;
+  }
+
+  ul.contestants, ul.options {
+    padding: 0;
+    margin-bottom: 0;
+    list-style: none;
+  }
+
+  .option {
+    background: #101010;
+    width: 80%;
+    height: 60px;
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: center;
+    border: 4px solid #989898;
+    margin: auto;
+    margin-bottom: 12px;
+    font-size: 1.8em;
+  }
+  .option-selected {
+    background: rgba(66, 127, 207, .2);
+    border-color: rgba(66, 127, 207, 1);
+  }
+
+  .player-name-list {
+    text-align: left;
+  }
+  .player-name-list ul {
+    padding: 0;
+    margin: 0;
+  }
+  .scoreboard {
+    list-style: none;
+    padding: 12px;
+    display: flex;
+    flex-flow: row wrap;
+    padding-left: 30px;
+    background: #888;
+  }
+  .scoreboard:nth-of-type(2n+1) {
+    background: #555;
+  }
+  .player-name {
+    flex: 0 0 50%;
+    font-weight: bold;
+    font-size: 2em;
+  }
+  .player-score {
+    flex: 0 0 20%;
+    font-weight: bold;
+    font-size: 2em;
+  }
+  .player-score-increase {
+    flex: 0 0 30%;
+    padding-top: 12px;
+  }
+  .player-comment {
+    flex: 0 0 100%;
   }
 </style>

@@ -618,7 +618,8 @@ proto.PlayerScore.toObject = function(includeInstance, msg) {
   var f, obj = {
     name: msg.getName(),
     scorechange: msg.getScorechange(),
-    newscore: msg.getNewscore()
+    newscore: msg.getNewscore(),
+    comment: msg.getComment()
   };
 
   if (includeInstance) {
@@ -666,6 +667,10 @@ proto.PlayerScore.deserializeBinaryFromReader = function(msg, reader) {
     case 3:
       var value = /** @type {number} */ (reader.readInt32());
       msg.setNewscore(value);
+      break;
+    case 4:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setComment(value);
       break;
     default:
       reader.skipField();
@@ -726,6 +731,13 @@ proto.PlayerScore.prototype.serializeBinaryToWriter = function (writer) {
       f
     );
   }
+  f = this.getComment();
+  if (f.length > 0) {
+    writer.writeString(
+      4,
+      f
+    );
+  }
 };
 
 
@@ -780,6 +792,21 @@ proto.PlayerScore.prototype.getNewscore = function() {
 /** @param {number} value  */
 proto.PlayerScore.prototype.setNewscore = function(value) {
   jspb.Message.setField(this, 3, value);
+};
+
+
+/**
+ * optional string comment = 4;
+ * @return {string}
+ */
+proto.PlayerScore.prototype.getComment = function() {
+  return /** @type {string} */ (jspb.Message.getFieldProto3(this, 4, ""));
+};
+
+
+/** @param {string} value  */
+proto.PlayerScore.prototype.setComment = function(value) {
+  jspb.Message.setField(this, 4, value);
 };
 
 
@@ -1460,7 +1487,8 @@ proto.PromptAnswer.toObject = function(includeInstance, msg) {
     code: msg.getCode(),
     playername: msg.getPlayername(),
     answersList: jspb.Message.toObjectList(msg.getAnswersList(),
-    proto.PromptAnswer.Answer.toObject, includeInstance)
+    proto.PromptAnswer.Answer.toObject, includeInstance),
+    comment: msg.getComment()
   };
 
   if (includeInstance) {
@@ -1510,6 +1538,10 @@ proto.PromptAnswer.deserializeBinaryFromReader = function(msg, reader) {
       reader.readMessage(value,proto.PromptAnswer.Answer.deserializeBinaryFromReader);
       msg.getAnswersList().push(value);
       msg.setAnswersList(msg.getAnswersList());
+      break;
+    case 4:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setComment(value);
       break;
     default:
       reader.skipField();
@@ -1569,6 +1601,13 @@ proto.PromptAnswer.prototype.serializeBinaryToWriter = function (writer) {
       3,
       f,
       proto.PromptAnswer.Answer.serializeBinaryToWriter
+    );
+  }
+  f = this.getComment();
+  if (f.length > 0) {
+    writer.writeString(
+      4,
+      f
     );
   }
 };
@@ -1633,6 +1672,21 @@ proto.PromptAnswer.prototype.setAnswersList = function(value) {
 
 proto.PromptAnswer.prototype.clearAnswersList = function() {
   this.setAnswersList([]);
+};
+
+
+/**
+ * optional string comment = 4;
+ * @return {string}
+ */
+proto.PromptAnswer.prototype.getComment = function() {
+  return /** @type {string} */ (jspb.Message.getFieldProto3(this, 4, ""));
+};
+
+
+/** @param {string} value  */
+proto.PromptAnswer.prototype.setComment = function(value) {
+  jspb.Message.setField(this, 4, value);
 };
 
 

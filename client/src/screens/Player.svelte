@@ -16,8 +16,6 @@
 
   // ==================== State =====================
 
-  const playerNamesSet = new Set()
-  let playerNames = []
   let playerScores = {}
   let curPlayerScore = 0
   let curPlayerStatus = ''
@@ -31,8 +29,6 @@
       },
     }
 
-    playerNamesSet.add(playerName)
-    playerNames = [...playerNamesSet]
   }
 
   let prompt = {
@@ -68,6 +64,7 @@
             [name]: {
               ...score,
               scoreChange: 0,
+              comment: ''
             }
           }), {})
         break
@@ -78,6 +75,7 @@
           [s.name]: { // 0 is omitted
             scoreChange: s.scoreChange || 0,
             newScore: s.newScore || 0, 
+            comment: s.comment
           }
         }), {})
         curPlayerScore = playerScores[name].newScore
@@ -125,16 +123,21 @@
 
   // ====================== PROMPT =====================
 
-  let answers = new Map()
+  let answers = {}
   const chooseOption = (contestant, option) => {
-    answers.set(contestant, option)
+    answers = {
+      ...answers,
+      [contestant]: option,
+    }
   }
+
+  let comment = ''
 
   const submit = () => {
     const msg = new proto.PromptAnswer()
     const answerMsgs = []
 
-    for (let [contestant, option] of answers.entries()) {
+    for (let [contestant, option] of Object.entries(answers)) {
       const answerMsg = new proto.PromptAnswer.Answer()
       answerMsg.setContestant(contestant)
       answerMsg.setOption(option)
@@ -144,6 +147,7 @@
     msg.setPlayername(name)
     msg.setCode(code)
     msg.setAnswersList(answerMsgs)
+    msg.setComment(comment)
 
     const body = msg.serializeBinary()
 
@@ -161,6 +165,8 @@
       } else {
         errMessage = status.getErrormessage() || 'Error (no message)'
       }
+      answers = {}
+      comment = ''
     })
   }
 
@@ -177,11 +183,11 @@
   {/if}
 
   {#if gameState == GameState.JOINING}
-    <div class="joining">Joining...</div>
+    <div class="status-box joining">Joining...</div>
   {:else if gameState == GameState.CONNECTING}
-    <div class="connecting">Connecting...</div>
+    <div class="status-box connecting">Connecting...</div>
   {:else if gameState == GameState.WAITING}
-    <div class="waiting">Waiting...</div>
+    <div class="status-box waiting">Waiting...</div>
   {:else if gameState == GameState.PROMPT}
     <div class="prompt">
       <h2>{prompt.name}</h2>
@@ -191,10 +197,11 @@
             <h3>{contestant}</h3>
             <div class="options">
               {#each prompt.options as option}
-                <div class="option">
-                  <label>
-                    <input type="radio" name={contestant} value={option} on:click={chooseOption(contestant,option)}> {option}
-                  </label>
+                <div 
+                  class="option {answers[contestant] === option ? 'option-selected' : ''}"
+                  on:click={chooseOption(contestant,option)}>
+                    {answers[contestant] === option ? '✅' : ''}
+                    {option}
                 </div>
               {/each}
             </div>
@@ -202,19 +209,25 @@
         {/each}
       </div>
 
+      <h3>Comment</h3>
+      <input class="comment-input" 
+        placeholder={
+          ["Extra predictions?","Say something nice","Just for fun"][parseInt(Math.random()*3)]
+        } bind:value={comment}>
+
       <button on:click={submit}>Submit Answer</button>
     </div>
   {:else if gameState == GameState.RESOLVE}
-    <div class="resolve">Waiting for host to select winners...</div>
+    <div class="status-box resolve">Waiting for host to select winners...</div>
   {/if}
 
   <p class="error">{errMessage}</p>
 
+  <h3>Scoreboard</h3>
   <div class="player-name-list">
-    <h3>Players</h3>
     <ul>
-      {#each playerNames as playerName}
-        <li>
+      {#each Object.keys(playerScores) as playerName}
+        <li class="scoreboard">
           <span class="player-name">
             {playerName} 
           </span>
@@ -223,8 +236,33 @@
           </span>
           {#if playerScores[playerName].scoreChange > 0}
             <span class="player-score-increase">
-              (⬆ {playerScores[playerName].scoreChange})
+              + {playerScores[playerName].scoreChange}
             </span>
+          {/if}
+          {#if playerScores[playerName].comment }
+            <p class="player-comment">
+              &ldquo;{playerScores[playerName].comment}&rdquo;
+            </p>
+          {/if}
+        </li>
+      {/each}
+      {#each Object.keys(playerScores) as playerName}
+        <li class="scoreboard">
+          <span class="player-name">
+            {playerName} 
+          </span>
+          <span class="player-score">
+            {playerScores[playerName].newScore}
+          </span>
+          {#if playerScores[playerName].scoreChange > 0}
+            <span class="player-score-increase">
+              + {playerScores[playerName].scoreChange}
+            </span>
+          {/if}
+          {#if playerScores[playerName].comment }
+            <p class="player-comment">
+              &ldquo;{playerScores[playerName].comment}&rdquo;
+            </p>
           {/if}
         </li>
       {/each}
@@ -238,27 +276,117 @@
     text-align: center;
     padding: 21px;
     margin: 0 auto;
-    background-color: #333333;
+    background-color: #fcfcfc;
     text-align: center;
-    color: #ffffff;
-    font-family: 'Space Mono', monospace;
+    color: #232323;
+    font-family: 'Pangolin', cursive;
   }
-  h1 {
-    font-size: 30px;
+  h2 {
+    font-family: 'Pangolin', cursive;
+    font-size: 1.8em;
+  }
+  h3 {
+    font-family: 'Pangolin', cursive;
+    font-size: 3em;
   }
   button {
     margin: 0 auto;
-    margin-top: 100px;
+    margin-top: 40px;
     padding: 20px;
-    color: #4F8132;
     display: block;
     width: 300px;
-    font-size: 14px;
+    font-family: 'Pangolin', cursive;
+    font-weight: bold;
+    font-size: 1.8em;
+    background: rgba(66, 207, 127, 1);
+    border: 0px solid;
+    color: #fefefe;
   }
   button:hover {
     text-decoration: none;
   }
   .error {
     color: #CC2010;
+  }
+
+  .status-box {
+    width: 80%;
+    height: 210px;
+    background: #efefef;
+    margin: auto;
+    margin-top: 12px;
+    margin-bottom: 12px;
+    padding: 0 15px;
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8em;
+  }
+
+  .my-score {
+    font-size: 1.8em;
+  }
+  .my-score-status {
+    font-size: 1.6em;
+  }
+
+  .comment-input {
+    font-size: 1.8em;
+    height: 120px;
+  }
+
+  .option {
+    background: #fcfcfc;
+    width: 80%;
+    height: 60px;
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: center;
+    border: 4px solid #989898;
+    margin: auto;
+    margin-bottom: 12px;
+    font-size: 1.8em;
+  }
+  .option-selected {
+    background: rgba(66, 207, 127, .2);
+    border-color: rgba(66, 207, 127, 1);
+  }
+
+  .player-name-list {
+    text-align: left;
+  }
+  .player-name-list ul {
+    padding: 0;
+    margin: 0;
+  }
+  .scoreboard {
+    list-style: none;
+    padding: 12px;
+    display: flex;
+    flex-flow: row wrap;
+    padding-left: 30px;
+  }
+  .scoreboard:nth-of-type(2n+1) {
+    background: #eee;
+  }
+  .player-name {
+    flex: 0 0 50%;
+    font-weight: bold;
+    font-size: 2em;
+  }
+  .player-score {
+    flex: 0 0 20%;
+    font-weight: bold;
+    font-size: 2em;
+  }
+  .player-score-increase {
+    flex: 0 0 30%;
+    padding-top: 12px;
+    color: #288a52;
+  }
+  .player-comment {
+    flex: 0 0 100%;
   }
 </style>
