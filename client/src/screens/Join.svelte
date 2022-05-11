@@ -19,7 +19,10 @@
       'content-type': 'application/x-protobuf',
       body,
     })
-    .then(response => response.arrayBuffer())
+    .then(response => {
+      if (!response.ok) throw response.statusText
+      return response.arrayBuffer()
+    })
     .then(data => {
       const bytes = new Uint8Array(data);
       const status = proto.Status.deserializeBinary(bytes)
@@ -30,14 +33,24 @@
       } else {
         errMessage = status.getErrormessage() || 'Error (no message)'
       }
-    });
+      errMessage = ''
+    })
+    .catch(err => {
+      console.error(err)
+      errMessage = err || 'Error (no message)'
+    })
   };
+
+  const toUpperCase = e => {
+    e.preventDefault();
+    code = e.target.value = e.target.value.toUpperCase().replace(' ', '');
+  }
 </script>
 
 <main>
   <h1>Join Game</h1>
 
-  <input type="text" placeholder="Code" bind:value={code}>
+  <input type="text" placeholder="Code" on:input={toUpperCase} bind:value={code}>
   <input type="text" placeholder="Your Name" bind:value={name}>
 
   <button on:click={join}>Join</button>

@@ -1,5 +1,5 @@
 * Client
-** Routes [4/5]
+** Routes [4/4]
   - [X] /
     - btn: Join -> /join
   - [X] /join
@@ -38,17 +38,17 @@
         - btn: next prompt
         - btn: back
 * Server
-** API [5/7]
+** API [6/6]
   - [X] POST /api/join 
   - [X] POST /api/player/ready
   - [X] POST /api/player/answer
-  - [ ] POST /api/host/create {code}
+  - [X] POST /api/host/create {code}
     - body: code
     - creates random host key
   - [X] POST /api/host/prompt {code, key, payload}
     - body: prompt, contestant_names, options 
   - [X] POST /api/host/resolve {code, key, payload} 
     - body: answers
-** SSE [2/3]
+** SSE [2/2]
   - [X] /events/player/{code}
   - [X] /events/host/{code}

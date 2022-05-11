@@ -107,7 +107,10 @@
     'content-type': 'application/x-protobuf',
     body,
   })
-  .then(response => response.arrayBuffer())
+  .then(response => {
+    if (!response.ok) throw response.statusText
+    return response.arrayBuffer()
+  })
   .then(data => {
     const bytes = new Uint8Array(data);
     const status = proto.Status.deserializeBinary(bytes)
@@ -118,7 +121,12 @@
     } else {
       errMessage = status.getErrormessage() || 'Error (no message)'
     }
-  });
+    errMessage = ''
+  })
+  .catch(err => {
+    console.error(err)
+    errMessage = err.message || 'Error (no message)'
+  })
 
 
   // ====================== PROMPT =====================
@@ -156,7 +164,10 @@
       'content-type': 'application/x-protobuf',
       body,
     })
-    .then(response => response.arrayBuffer())
+    .then(response => {
+      if (!response.ok) throw response.statusText
+      return response.arrayBuffer()
+    })
     .then(data => {
       const bytes = new Uint8Array(data);
       const status = proto.Status.deserializeBinary(bytes)
@@ -167,10 +178,21 @@
       }
       answers = {}
       comment = ''
+      errMessage = ''
+    })
+    .catch(err => {
+      console.error(err)
+      errMessage = err || 'Error (no message)'
     })
   }
 
 
+  // ===================== Exit Game =====================
+  const exitGame = () => {
+    localStorage.clear()
+
+    window.location.href = `/`
+  }
 
 </script>
 
@@ -246,28 +268,13 @@
           {/if}
         </li>
       {/each}
-      {#each Object.keys(playerScores) as playerName}
-        <li class="scoreboard">
-          <span class="player-name">
-            {playerName} 
-          </span>
-          <span class="player-score">
-            {playerScores[playerName].newScore}
-          </span>
-          {#if playerScores[playerName].scoreChange > 0}
-            <span class="player-score-increase">
-              + {playerScores[playerName].scoreChange}
-            </span>
-          {/if}
-          {#if playerScores[playerName].comment }
-            <p class="player-comment">
-              &ldquo;{playerScores[playerName].comment}&rdquo;
-            </p>
-          {/if}
-        </li>
-      {/each}
     </ul>
   </div>
+
+  <div class="exit-game-container">
+    <button class="exit-game-btn" on:click={exitGame}>End Game</button>
+  </div>
+
 </main>
 
 <style>
@@ -388,5 +395,18 @@
   }
   .player-comment {
     flex: 0 0 100%;
+  }
+
+  button.exit-game-btn {
+    margin: 0 auto;
+    margin-top: 18px;
+    padding: 20px;
+    color: #fafafa;
+    display: block;
+    width: 120px;
+    font-family: 'Pangolin', cursive;
+    font-weight: bold;
+    font-size: 1em;
+    background: rgba(128, 23, 34, .8);
   }
 </style>

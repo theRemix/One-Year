@@ -8,6 +8,7 @@
   let hostState = HostState.CREATE_GAME
 
   let code = localStorage.getItem('code')
+  let key = localStorage.getItem('key')
 
   let errMessage = ""
 
@@ -97,21 +98,36 @@
       'content-type': 'application/x-protobuf',
       body,
     })
-    .then(response => response.arrayBuffer())
+    .then(response => {
+      if (!response.ok) throw response.statusText
+      return response.arrayBuffer()
+    })
     .then(data => {
       const bytes = new Uint8Array(data);
-      const status = proto.Status.deserializeBinary(bytes)
-      if(status.getCode() === proto.Status.Code.SUCCESS){
+      const hostCreateStatus = proto.HostCreateStatus.deserializeBinary(bytes)
+      if(hostCreateStatus.getCode() === proto.HostCreateStatus.Code.SUCCESS){
         if(hostState === HostState.CREATE_GAME){ // prevent race with sse
+          key = hostCreateStatus.getKey()
           localStorage.setItem('code', code)
+          localStorage.setItem('key', key)
           hostState = HostState.PROMPT
           startSSE()
         }
       } else {
-        errMessage = status.getErrormessage() || 'Error (no message)'
+        errMessage = hostCreateStatus.getErrormessage() || 'Error (no message)'
       }
       comments = {}
-    });
+      errMessage = ''
+    })
+    .catch(err => {
+      console.error(err)
+      errMessage = err || 'Error (no message)'
+    })
+  }
+
+  const toUpperCase = e => {
+    e.preventDefault();
+    code = e.target.value = e.target.value.toUpperCase().replace(' ', '');
   }
 
   // ====================== Prompts =====================
@@ -125,7 +141,7 @@
 
     msg.setName(promptName)
     msg.setCode(code)
-    /* msg.setKey(key) */
+    msg.setKey(key)
     msg.setContestantsList(contestants)
     msg.setOptionsList(options)
 
@@ -136,16 +152,25 @@
       'content-type': 'application/x-protobuf',
       body,
     })
-    .then(response => response.arrayBuffer())
+    .then(response => {
+      if (!response.ok) throw response.statusText
+      return response.arrayBuffer()
+    })
     .then(data => {
       const bytes = new Uint8Array(data);
       const status = proto.Status.deserializeBinary(bytes)
+      console.log(status.toObject())
       if(status.getCode() === proto.Status.Code.SUCCESS){
         hostState = HostState.RESOLVE
       } else {
         errMessage = status.getErrormessage() || 'Error (no message)'
       }
-    });
+      errMessage = ''
+    })
+    .catch(err => {
+      console.error(err)
+      errMessage = err || 'Error (no message)'
+    })
   }
 
   // ==================== Contestants ===================
@@ -228,7 +253,7 @@
 
     const resolveMsg = new proto.Resolve()
     resolveMsg.setCode(code)
-    /* resolveMsg.setKey(key) */
+    resolveMsg.setKey(key)
     const playerScoresMsgs = []
   
     for (let playerName of playerNames) {
@@ -253,7 +278,10 @@
       'content-type': 'application/x-protobuf',
       body,
     })
-    .then(response => response.arrayBuffer())
+    .then(response => {
+      if (!response.ok) throw response.statusText
+      return response.arrayBuffer()
+    })
     .then(data => {
       const bytes = new Uint8Array(data);
       const status = proto.Status.deserializeBinary(bytes)
@@ -263,6 +291,11 @@
         errMessage = status.getErrormessage() || 'Error (no message)'
       }
       hostAnswers = {}
+      errMessage = ''
+    })
+    .catch(err => {
+      console.error(err)
+      errMessage = err || 'Error (no message)'
     })
   }
 
@@ -271,7 +304,7 @@
   const endGame = () => {
     localStorage.clear()
 
-    window.location.href = `/create`
+    window.location.href = `/host`
   }
 
 </script>
@@ -280,7 +313,7 @@
   {#if hostState == HostState.CREATE_GAME}
     <div class="create-game">
       <h2>Create Game</h2>
-      <input type="text" placeholder="Code" bind:value={code} maxlength="6">
+      <input type="text" placeholder="Code" on:input={toUpperCase} bind:value={code} maxlength="6">
       <button class="big-btn" on:click={createGame}>Create</button>
     </div>
   {:else if hostState == HostState.PROMPT}
@@ -354,34 +387,36 @@
 
   <p class="error">{errMessage}</p>
 
-  <div class="player-name-list">
-    <h3>Scoreboard</h3>
-    <ul>
-      {#each playerNames as playerName}
-        <li class={ playersAnswered.includes(playerName) ? "scoreboard answered" : "scoreboard "}>
-          <span class="player-name">
-            {playerName} 
-            <span class="player-answered">
-              {playersAnswered.includes(playerName) ? "✓" : "…"}
+  {#if hostState != HostState.CREATE_GAME}
+    <div class="player-name-list">
+      <h3>Scoreboard</h3>
+      <ul>
+        {#each playerNames as playerName}
+          <li class={ playersAnswered.includes(playerName) ? "scoreboard answered" : "scoreboard "}>
+            <span class="player-name">
+              {playerName} 
+              <span class="player-answered">
+                {playersAnswered.includes(playerName) ? "✓" : "…"}
+              </span>
             </span>
-          </span>
-          <span class="player-score">
-            {playerScores[playerName]}
-          </span>
-          {#if playerAwardedPoints[playerName] > 0}
-            <span class="player-score-increase">
-              + {playerAwardedPoints[playerName]}
+            <span class="player-score">
+              {playerScores[playerName]}
             </span>
-          {/if}
-          {#if comments[playerName] }
-            <p class="player-comment">
-              &ldquo;{comments[playerName]}&rdquo;
-            </p>
-          {/if}
-        </li>
-      {/each}
-    </ul>
-  </div>
+            {#if playerAwardedPoints[playerName] > 0}
+              <span class="player-score-increase">
+                + {playerAwardedPoints[playerName]}
+              </span>
+            {/if}
+            {#if comments[playerName] }
+              <p class="player-comment">
+                &ldquo;{comments[playerName]}&rdquo;
+              </p>
+            {/if}
+          </li>
+        {/each}
+      </ul>
+    </div>
+  {/if}
 </main>
 
 <style>

@@ -1,6 +1,9 @@
 package main
 
 import (
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -16,6 +19,8 @@ import (
 )
 
 var events *sse.Server
+
+var hostKeys = make(map[string]string)
 
 const (
 	playerChannel = "/events/player/"
@@ -44,17 +49,31 @@ func hostCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// @TODO check if join code is available
-
-	status := &pb.Status{
-		Code: pb.Status_Success,
+	if _, ok := hostKeys[join.Code]; ok {
+		fmt.Println("Code is in use '%s'", join.Code)
+		w.WriteHeader(http.StatusBadRequest) // or 302
+		return
 	}
-	bytes, err = proto.Marshal(status)
+
+	var key string
+	keyData := make([]byte, 10)
+	if _, err := rand.Read(keyData); err == nil {
+		keyBytes := sha256.Sum256(keyData)
+		key = hex.EncodeToString(keyBytes[:])
+	}
+
+	hostCreateStatus := &pb.HostCreateStatus{
+		Code: pb.HostCreateStatus_Success,
+		Key:  key,
+	}
+	bytes, err = proto.Marshal(hostCreateStatus)
 	if err != nil {
-		fmt.Println("Error encoding pb.Status: ", err.Error())
+		fmt.Println("Error encoding pb.HostCreateStatus: ", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	hostKeys[join.Code] = key
 
 	w.Write(bytes)
 }
@@ -80,7 +99,15 @@ func hostPrompt(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// @TODO validate key
+	if key, ok := hostKeys[prompt.Code]; !ok {
+		fmt.Println("Code not found '%s'", prompt.Code)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	} else if key != prompt.Key {
+		fmt.Println("Host Key Mismatch for code '%s': incorrect key '%s'", prompt.Code, prompt.Key)
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 
 	status := &pb.Status{
 		Code: pb.Status_Success,
@@ -133,7 +160,15 @@ func hostResolve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// @TODO validate key
+	if key, ok := hostKeys[resolve.Code]; !ok {
+		fmt.Println("Code not found '%s'", resolve.Code)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	} else if key != resolve.Key {
+		fmt.Println("Host Key Mismatch for code '%s': incorrect key '%s'", resolve.Code, resolve.Key)
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 
 	status := &pb.Status{
 		Code: pb.Status_Success,
@@ -182,6 +217,12 @@ func join(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("[POST] /api/join %+v", join)
+
+	if _, ok := hostKeys[join.Code]; !ok {
+		fmt.Println("Code not found '%s'", join.Code)
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 
 	status := &pb.Status{
 		Code: pb.Status_Success,
