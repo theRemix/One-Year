@@ -251,6 +251,9 @@
     playerAwardedPoints = {}
 
     for (let [pName, pAnswers] of playerAnswers.entries()) {
+      if (!pAnswers) { // user submitted empty answers
+        pAnswers = []
+      }
       for (let pAnswer of pAnswers) {
         for (let [contestant, option] of Object.entries(hostAnswers)) {
           if (

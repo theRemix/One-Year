@@ -275,7 +275,7 @@
   </div>
 
   <div class="exit-game-container">
-    <button class="exit-game-btn" on:click={exitGame}>End Game</button>
+    <button class="exit-game-btn" on:click={exitGame}>Leave Game</button>
   </div>
 
 </main>
