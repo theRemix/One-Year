@@ -417,6 +417,15 @@
     background: rgba(128, 23, 34, .8);
   }
 
+  .options {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-between;
+  }
+  .option {
+    flex: 0 0 48%;
+  }
+
   .contestant-thumbnail {
     max-width: 150px;
     display: block;
