@@ -75,10 +75,14 @@ message PlayerEvent {
 }
 
 message Prompt {
+  message Contestant {
+    string name = 1;
+    string thumbnail = 2;
+  }
   string name = 1;
   string code = 2;
   string key = 3;
-  repeated string contestants = 4;
+  repeated Contestant contestants = 4;
   repeated string options = 5;
 }
 

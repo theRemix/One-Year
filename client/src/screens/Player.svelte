@@ -216,13 +216,16 @@
       <div class="contestants">
         {#each prompt.contestants as contestant}
           <div class="contestant">
-            <h3>{contestant}</h3>
+            {#if contestant.thumbnail}
+              <img class="contestant-thumbnail" src={contestant.thumbnail} alt={contestant.name} />
+            {/if}
+            <h3>{contestant.name}</h3>
             <div class="options">
               {#each prompt.options as option}
                 <div 
-                  class="option {answers[contestant] === option ? 'option-selected' : ''}"
-                  on:click={chooseOption(contestant,option)}>
-                    {answers[contestant] === option ? '✅' : ''}
+                  class="option {answers[contestant.name] === option ? 'option-selected' : ''}"
+                  on:click={chooseOption(contestant.name,option)}>
+                    {answers[contestant.name] === option ? '✅' : ''}
                     {option}
                 </div>
               {/each}
@@ -295,6 +298,7 @@
   h3 {
     font-family: 'Pangolin', cursive;
     font-size: 3em;
+    margin: 10px 0;
   }
   button {
     margin: 0 auto;
@@ -314,6 +318,9 @@
   }
   .error {
     color: #CC2010;
+  }
+  .contestant {
+    margin-bottom: 44px;
   }
 
   .status-box {
@@ -408,5 +415,11 @@
     font-weight: bold;
     font-size: 1em;
     background: rgba(128, 23, 34, .8);
+  }
+
+  .contestant-thumbnail {
+    max-width: 150px;
+    display: block;
+    margin: auto;
   }
 </style>

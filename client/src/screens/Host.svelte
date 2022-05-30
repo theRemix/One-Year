@@ -142,8 +142,15 @@
     msg.setName(promptName)
     msg.setCode(code)
     msg.setKey(key)
-    msg.setContestantsList(contestants)
     msg.setOptionsList(options)
+
+    const contestantMsgs = contestants.map(({name, thumbnail}) => {
+      const msg = new proto.Prompt.Contestant()
+      msg.setName(name)
+      msg.setThumbnail(thumbnail)
+      return msg
+    })
+    msg.setContestantsList(contestantMsgs)
 
     const body = msg.serializeBinary()
 
@@ -177,14 +184,19 @@
 
   $: contestants = JSON.parse(localStorage.getItem('contestants') || '[]')
   let addContestantName
+  let addContestantThumbnail
   const addContestant = () => {
-    contestants = [...contestants, addContestantName]
+    contestants = [...contestants, {
+      name: addContestantName,
+      thumbnail: addContestantThumbnail,
+    }]
     prompt.contestants = contestants
     localStorage.setItem('contestants', JSON.stringify(contestants))
     addContestantName = ''
+    addContestantThumbnail = ''
   }
   const removeContestant = contestantName => {
-    contestants = [...contestants.filter(c => c !== contestantName)]
+    contestants = [...contestants.filter(c => c.name !== contestantName)]
     prompt.contestants = contestants
     localStorage.setItem('contestants', JSON.stringify(contestants))
   }
@@ -328,11 +340,16 @@
 
       <div class="prompt-section input-contestants">
         <input type="text" placeholder="Add Contestant" bind:value={addContestantName}>
+        <input type="text" placeholder="Thumbnail (optional)" bind:value={addContestantThumbnail}>
         <button class="medium-btn" on:click={addContestant}>Add</button>
         <ul class="contestants">
           {#each contestants as contestant}
-            <li>{contestant}
-              <button class="tiny-btn" on:click={removeContestant(contestant)}>❌</button>
+            <li>
+              {#if contestant.thumbnail}
+                <img class="contestant-thumbnail" src={contestant.thumbnail} alt={contestant.name} />
+              {/if}
+              {contestant.name}
+              <button class="tiny-btn" on:click={removeContestant(contestant.name)}>❌</button>
             </li>
           {/each}
         </ul>
@@ -364,13 +381,16 @@
       <div class="contestants">
         {#each contestants as contestant}
           <div class="prompt-section contestant">
-            <h3>{contestant}</h3>
+            {#if contestant.thumbnail}
+              <img class="contestant-thumbnail" src={contestant.thumbnail} alt={contestant.name} />
+            {/if}
+            <h3>{contestant.name}</h3>
             <div class="options">
               {#each options as option}
                 <div 
-                  class="option {hostAnswers[contestant] === option ? 'option-selected' : ''}"
-                  on:click={chooseOption(contestant,option)}>
-                    {hostAnswers[contestant] === option ? '✅' : ''}
+                  class="option {hostAnswers[contestant.name] === option ? 'option-selected' : ''}"
+                  on:click={chooseOption(contestant.name,option)}>
+                    {hostAnswers[contestant.name] === option ? '✅' : ''}
                     {option}
                 </div>
               {/each}
@@ -551,5 +571,10 @@
   }
   .player-comment {
     flex: 0 0 100%;
+  }
+  .contestant-thumbnail {
+    max-width: 150px;
+    display: block;
+    margin: auto;
   }
 </style>

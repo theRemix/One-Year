@@ -101,11 +101,13 @@ func hostPrompt(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if key, ok := hostKeys[prompt.Code]; !ok {
-		fmt.Println("Code not found '%s'", prompt.Code)
+		fmt.Printf("Code not found '%s'\n", prompt.Code)
+		http.Error(w, "Code not found", http.StatusNotFound)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	} else if key != prompt.Key {
 		fmt.Println("Host Key Mismatch for code '%s': incorrect key '%s'", prompt.Code, prompt.Key)
+		http.Error(w, "Host Key Mismatch", http.StatusUnauthorized)
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
@@ -162,11 +164,13 @@ func hostResolve(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if key, ok := hostKeys[resolve.Code]; !ok {
-		fmt.Println("Code not found '%s'", resolve.Code)
+		fmt.Printf("Code not found '%s'\n", resolve.Code)
+		http.Error(w, "Code not found", http.StatusNotFound)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	} else if key != resolve.Key {
 		fmt.Println("Host Key Mismatch for code '%s': incorrect key '%s'", resolve.Code, resolve.Key)
+		http.Error(w, "Host Key Mismatch", http.StatusUnauthorized)
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
@@ -220,7 +224,8 @@ func join(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[POST] /api/join %+v", join)
 
 	if _, ok := hostKeys[join.Code]; !ok {
-		fmt.Println("Code not found '%s'", join.Code)
+		fmt.Printf("Code not found '%s'\n", join.Code)
+		http.Error(w, "Code not found", http.StatusNotFound)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
