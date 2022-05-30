@@ -159,7 +159,7 @@
     .then(data => {
       const bytes = new Uint8Array(data);
       const status = proto.Status.deserializeBinary(bytes)
-      console.log(status.toObject())
+      playersAnswered = []
       if(status.getCode() === proto.Status.Code.SUCCESS){
         hostState = HostState.RESOLVE
       } else {

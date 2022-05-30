@@ -50,7 +50,8 @@ func hostCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, ok := hostKeys[join.Code]; ok {
-		fmt.Println("Code is in use '%s'", join.Code)
+		fmt.Printf("Code is in use '%s'\n", join.Code)
+		http.Error(w, "Code is in use", http.StatusBadRequest)
 		w.WriteHeader(http.StatusBadRequest) // or 302
 		return
 	}
