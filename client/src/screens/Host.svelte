@@ -234,6 +234,9 @@
     }
   }
 
+  const byScore = (playerName_a, playerName_b) => 
+    playerScores[playerName_a] - playerScores[playerName_b]
+
   let playerAwardedPoints = {}
   const awardPlayerPoints = (playerName, points) => {
     if (!playerAwardedPoints.hasOwnProperty(playerName)) {
@@ -244,6 +247,8 @@
       ...playerAwardedPoints,
       [playerName]: playerAwardedPoints[playerName] + points
     }
+
+    playerNames = [...playerNamesSet].sort(byScore)
   }
 
   let hostAnswers = {}

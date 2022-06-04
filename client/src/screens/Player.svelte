@@ -253,7 +253,7 @@
     <ul>
       {#each Object.keys(playerScores) as playerName}
         <li class="scoreboard">
-          <span class="player-name">
+          <span class={playerName === name ? 'player-name current-player-name' : 'player-name'}>
             {playerName} 
           </span>
           <span class="player-score">
@@ -389,6 +389,9 @@
     flex: 0 0 50%;
     font-weight: bold;
     font-size: 2em;
+  }
+  .current-player-name {
+    text-decoration: underline;
   }
   .player-score {
     flex: 0 0 20%;
