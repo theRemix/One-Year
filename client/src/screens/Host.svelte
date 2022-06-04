@@ -28,15 +28,22 @@
     }
   }
 
-  const playerAnswers = new Map()
+  $: playerAnswers = {}
   $: playersAnswered = []
   let comments = {}
+  const clearPlayerAnswers = () => {
+    playerAnswers = {}
+    playersAnswered = []
+  }
   const setPlayerAnswer = ({playerName, answers, comment}) => {
     // save answer
-    playerAnswers.set(playerName, answers)
+    playerAnswers = {
+      ...playerAnswers, 
+      [playerName]: answers
+    }
 
     // mark as answered
-    playersAnswered = [...playerAnswers.keys()]
+    playersAnswered = [...Object.keys(playerAnswers)]
 
     comments = {
       ...comments,
@@ -166,7 +173,7 @@
     .then(data => {
       const bytes = new Uint8Array(data);
       const status = proto.Status.deserializeBinary(bytes)
-      playersAnswered = []
+      clearPlayerAnswers()
       if(status.getCode() === proto.Status.Code.SUCCESS){
         hostState = HostState.RESOLVE
       } else {
@@ -250,7 +257,7 @@
   const resolve = () => {
     playerAwardedPoints = {}
 
-    for (let [pName, pAnswers] of playerAnswers.entries()) {
+    for (let [pName, pAnswers] of Object.entries(playerAnswers)) {
       if (!pAnswers) { // user submitted empty answers
         pAnswers = []
       }
