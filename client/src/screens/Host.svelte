@@ -18,6 +18,7 @@
   $: playerNames = []
   const addPlayerName = playerName => {
     playerNamesSet.add(playerName)
+
     playerNames = [...playerNamesSet]
 
     if (!playerScores.hasOwnProperty(playerName)) {
@@ -329,9 +330,10 @@
 
   // ===================== End Game =====================
   const endGame = () => {
-    localStorage.clear()
-
-    window.location.href = `/host`
+    if (window.confirm("Are you sure?")) {
+      localStorage.clear()
+      window.location.href = `/host` 
+    }
   }
 
 </script>

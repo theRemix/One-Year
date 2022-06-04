@@ -189,9 +189,10 @@
 
   // ===================== Exit Game =====================
   const exitGame = () => {
-    localStorage.clear()
-
-    window.location.href = `/`
+    if (window.confirm("Are you sure?")) {
+      localStorage.clear()
+      window.location.href = `/`
+    }
   }
 
 </script>
